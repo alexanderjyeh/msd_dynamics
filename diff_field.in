@@ -1,0 +1,41 @@
+dimension 3
+units lj
+boundary f f f
+
+timestep 1e-04
+
+atom_style sphere
+atom_modify sort 0 1.0
+
+# kappa given in units of 1/sigma
+#pair_style yukawa/colloid 280 1.5
+pair_style none
+
+read_data input.data
+
+#pair_coeff 1 1 6050
+
+atom_modify sort 0 1.0
+
+variable k equal 0.0
+
+variable fxf atom -2.0*v_k*x
+variable fyf atom -2.0*v_k*y
+
+fix externforce all addforce v_fxf v_fyf  0.
+
+velocity all create 1.0 9283
+
+fix temp all langevin 1.0 1.0 1e-01 2321 gjf vfull
+fix step all nve/manifold/rattle 1e-4 100 sphere 2.81547
+
+fix_modify externforce energy yes
+
+compute dx2 all msd
+
+thermo 2000
+thermo_style custom time step pe ke etotal temp c_dx2[*]
+
+dump	        1 all custom 2000 out.dump id type x y z
+
+run 20000000
